@@ -2,6 +2,7 @@
 from typing import Any, Dict, List, Optional, Tuple, TypeVar, TypedDict
 from auto_gpt_plugin_template import AutoGPTPluginTemplate
 from colorama import Fore
+from .spoonacular_plugin.spoonacular_plugin import Chef
 
 PromptGenerator = TypeVar("PromptGenerator")
 
@@ -20,7 +21,10 @@ class AutoGPTSpoonacularPlugin(AutoGPTPluginTemplate):
         super().__init__()
         self._name = "Auto-GPT-Spoonacular-Plugin"
         self._version = "0.1.0"
-        self._description = "Auto-GPT Spoonacular Plugin: Supercharge recipte inpirations."
+        self._description = (
+            "Auto-GPT Spoonacular Plugin: Supercharge recipte inpirations."
+        )
+        self.cli = Chef()
 
     def can_handle_on_response(self) -> bool:
         """This method is called to check that the plugin can
@@ -52,27 +56,23 @@ class AutoGPTSpoonacularPlugin(AutoGPTPluginTemplate):
         Returns:
             PromptGenerator: The prompt generator.
         """
-        from .spoonacular_plugin.spoonacular_plugin import (
-            api_key_set,
-            search_recipes, 
-            get_analyzed_recipe_instructions,
-        )
-        if api_key_set():
+
+        if self.cli.api_key_set():
             prompt.add_command(
                 "Search Recipes",
                 "search_recipes",
                 {"query": "<query>"},
-                search_recipes,
+                self.cli.search_recipes,
             )
             prompt.add_command(
                 "Get Recipe Instructions",
                 "get_analyzed_recipe_instructions",
                 {"recipe_id": "<recipe_id>"},
-                get_analyzed_recipe_instructions,
+                self.cli.get_analyzed_recipe_instructions,
             )
         else:
             print(
-                Fore.RED 
+                Fore.RED
                 + f"{self._name} - {self._version} - Spoonacular plugin not loaded, because SPOONACULAR_API_KEY was not set in env."
             )
         return prompt
@@ -246,9 +246,7 @@ class AutoGPTSpoonacularPlugin(AutoGPTPluginTemplate):
         """
         pass
 
-    def can_handle_text_embedding(
-        self, text: str
-    ) -> bool:
+    def can_handle_text_embedding(self, text: str) -> bool:
         """This method is called to check that the plugin can
           handle the text_embedding method.
         Args:
@@ -256,10 +254,8 @@ class AutoGPTSpoonacularPlugin(AutoGPTPluginTemplate):
           Returns:
               bool: True if the plugin can handle the text_embedding method."""
         return False
-    
-    def handle_text_embedding(
-        self, text: str
-    ) -> list:
+
+    def handle_text_embedding(self, text: str) -> list:
         """This method is called when the chat completion is done.
         Args:
             text (str): The text to be convert to embedding.
